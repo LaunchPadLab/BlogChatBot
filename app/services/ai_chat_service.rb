@@ -23,16 +23,16 @@ class AiChatService
 
     openai_messages = previous_messages.empty? ? new_messages : previous_messages.concat(new_messages)
 
-    index = 0
+    index = 0 # Used to maintain the order of each chunk (in conjunction with some frontend code, see Chat.js line 84)
     response_handler = Proc.new do |response|
       content_of_response = response['delta']['content']
       @assistant_response += content_of_response if content_of_response
-      block.call(content_of_response, index)
+      block.call(content_of_response, index) # Call the block with these parameters, see line 23 in chats_controller.rb
       index += 1
     end
 
     llm.chat(model: 'gpt-3.5-turbo', messages: openai_messages) do |chunk|
-      response_handler.call(chunk)
+      response_handler.call(chunk) # Call the previously defined proc to handle each chunk of the response
     end
   end
 
@@ -79,6 +79,7 @@ class AiChatService
   end
 
   def generate_initial_prompt
+    # This is the initial prompt that the AI will use to generate a response, we mix this with the results of a similarity search to provide the AI with context
     <<~PROMPT
       You are a helpful assistant designed to provide employees of Launchpad Lab (LPL) information gathered from the company's blog posts. 
       Your answers should be as thorough as needed, accurate, and based on the information available in the blog posts. 
@@ -106,7 +107,7 @@ class AiChatService
   end
 
   def get_results
-    results = langchain.similarity_search(query: message, k: 6)
+    results = langchain.similarity_search(query: message, k: 6) # Perform a similarity search to find the most relevant blog posts, grab the top 6 results
     results.pluck(:content).join("\n\n")
   end
 

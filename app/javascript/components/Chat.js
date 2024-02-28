@@ -82,6 +82,7 @@ function Chat({ chat_threads }) {
     setIsAssistantTyping(false)
 
     function handleAssistantChunk() {
+      // This buffering system allows us to reorder the chunks coming from the server based on an Index
       let message = '';
       let currentExpectedIndex = expectedIndex;
       while (messageBuffer.hasOwnProperty(currentExpectedIndex)) {
@@ -142,7 +143,7 @@ function Chat({ chat_threads }) {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`p-4 pl-8 m-2 rounded-lg prose ${
+              className={`p-4 pl-8 m-2 rounded-lg ${
                 message.sender === 'assistant' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
               }`}
             >
@@ -151,7 +152,7 @@ function Chat({ chat_threads }) {
           ))}
           {
             assistantMessage && (
-              <div className="p-4 pl-8 m-2 rounded-lg bg-blue-500 text-white prose">
+              <div className="p-4 pl-8 m-2 rounded-lg bg-blue-500 text-white">
                 <Markdown>{assistantMessage}</Markdown>
               </div>
             )

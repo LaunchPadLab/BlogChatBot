@@ -18,14 +18,15 @@ class InitializeAndSeedVectorDb
 
   def initialize_vector_database
     puts "Initializing..."
-    @langchain.create_default_schema
+    @langchain.create_default_schema # Creates the PGVector extension for the database and initializes the blog_embeddings table
+    puts "Done!"
   end
 
   def seed_vector_database
     puts "Creating records..."
-    blog_posts = build_blog_posts_array
+    blog_posts = build_blog_posts_array # Fetches blog posts from the WP API and chunks them into smaller pieces
     puts "Generating embeddings..."
-    @langchain.add_texts(texts: blog_posts)
+    @langchain.add_texts(texts: blog_posts) # Generates embeddings for each blog post and stores them in the database
     puts "Done!"
   end
 
@@ -39,13 +40,13 @@ class InitializeAndSeedVectorDb
     blog_posts = []
     page = 1
 
-    # loop through all pages of blog posts
+    # loop through all pages of blog posts from the WP API
     loop do
       puts "Fetching blog posts from page #{page}..."
       posts, total_pages = fetch_blog_posts_from_api(page)
       blog_posts.concat(posts)
 
-      break if page >= total_pages
+      break if page >= total_pages # End loop on final page
       page += 1
     end
 
@@ -54,7 +55,7 @@ class InitializeAndSeedVectorDb
       title = post.dig("title", "rendered")
       text = Nokogiri::HTML(html).text # parse content from HTML into text
       chunks = Langchain::Chunker::Text.new(text, chunk_size: 2500, chunk_overlap: 500, separator: "\n").chunks # chunk text into smaller pieces to reduce context window and produce better embeddings
-      chunks.map { |chunk| "#{title} - \n #{chunk.text}" }
+      chunks.map { |chunk| "#{title} - \n #{chunk.text}" } # Include title with each chunk for better context
     end
 
     parsed_blog_posts.flatten

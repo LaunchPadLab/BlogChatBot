@@ -14,15 +14,16 @@ class ChatsController < ApplicationController
 
   def send_message
     chat_thread = ChatThread.find_or_create_by(id: params[:chat_thread_id])
-    previous_messages = chat_thread.messages.where(sender: [:user, :assistant])
+    previous_messages = chat_thread.messages.where(sender: [:user, :assistant]) # Get previous messages from the database, if any
 
     ai_service = AiChatService.new(message: params[:content], previous_messages: previous_messages)
 
+    #broadcast each chunk to the client
     ai_service.stream_response do |chunk, index|
       ActionCable.server.broadcast "chat_#{params[:room]}", { content: chunk, index: index }
     end
 
-    ai_service.log_chat_messages(chat_thread)
+    ai_service.log_chat_messages(chat_thread) # Store chat messages in the database
     ai_service.generate_chat_title(chat_thread)
     ai_service.close_connections
 
