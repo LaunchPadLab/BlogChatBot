@@ -2,7 +2,7 @@ class InitializeAndSeedVectorDb
 
   def initialize
     @llm = Langchain::LLM::OpenAI.new(api_key: ENV['OPENAI_KEY'])
-    @database_url = Rails.configuration.database_configuration[Rails.env]
+    @database_url = ENV['DATABASE_URL'] || Rails.configuration.database_configuration[Rails.env]
   end
 
   def run

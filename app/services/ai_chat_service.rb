@@ -111,7 +111,7 @@ class AiChatService
   end
 
   def langchain
-    database_url = Rails.configuration.database_configuration[Rails.env]
+    database_url = ENV['DATABASE_URL'] || Rails.configuration.database_configuration[Rails.env]
     @langchain ||= Langchain::Vectorsearch::Pgvector.new(url: database_url, index_name: 'blog_embeddings', llm: llm)
   end
 
