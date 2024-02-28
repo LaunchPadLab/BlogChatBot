@@ -71,3 +71,9 @@ gem "tailwindcss-rails", "~> 2.3"
 gem "langchainrb", "~> 0.9.2"
 
 gem "ruby-openai", "~> 6.3"
+
+gem 'sequel'
+
+gem 'pgvector'
+
+gem 'httparty'

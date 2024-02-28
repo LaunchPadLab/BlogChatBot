@@ -13,3 +13,9 @@
  *= require_tree .
  *= require_self
  */
+
+
+ol {
+  list-style-type: decimal;
+  padding-inline-start: 20px;
+}

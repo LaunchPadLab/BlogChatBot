@@ -1,6 +1,6 @@
 class ChatsController < ApplicationController
   def chat
-    @chat_threads = ChatThread.all
+    @chat_threads = ChatThread.all.order(created_at: :desc)
   end
 
   def get_chat_threads
@@ -8,8 +8,7 @@ class ChatsController < ApplicationController
   end
 
   def get_messages
-    messages = ChatThread.find(params[:chat_thread_id]).messages.where(sender: [:user, :assistant])
-    #TODO: Shape messages
+    messages = ChatThread.find(params[:chat_thread_id]).messages.where(sender: [:user, :assistant]).order(created_at: :asc)
     render json: messages
   end
 
@@ -18,10 +17,14 @@ class ChatsController < ApplicationController
     previous_messages = chat_thread.messages.where(sender: [:user, :assistant])
 
     ai_service = AiChatService.new(message: params[:content], previous_messages: previous_messages)
-    ai_service.stream_response do |chunk, finish_reason, index|
+
+    ai_service.stream_response do |chunk, index|
       ActionCable.server.broadcast "chat_#{params[:room]}", { content: chunk, index: index }
     end
+
     ai_service.log_chat_messages(chat_thread)
+    ai_service.generate_chat_title(chat_thread)
+    ai_service.close_connections
 
     render json: chat_thread
   end

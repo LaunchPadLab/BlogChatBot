@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react"
 import PropTypes from "prop-types"
 import ActionCable from "actioncable";
 import axios from 'axios';
+import Markdown from 'react-markdown'
 
 function Chat({ chat_threads }) {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -71,6 +72,13 @@ function Chat({ chat_threads }) {
     })
 
     setCurrentChatThread(response.data)
+    setChatThreads(prevChatThreads => {
+      const index = prevChatThreads.findIndex(chatThread => chatThread.id === response.data.id)
+      if (index === -1) {
+        return [response.data, ...prevChatThreads]
+      }
+      return prevChatThreads
+    })
     setIsAssistantTyping(false)
 
     function handleAssistantChunk() {
@@ -95,8 +103,7 @@ function Chat({ chat_threads }) {
   async function getMessages(chatThreadId) {
     // fetch messages from the server
     const messages = await axios.get(`/get_messages?chat_thread_id=${chatThreadId}`)
-    console.log(messages)
-    setMessages(messages)
+    setMessages(messages.data)
   }
 
   function onChatThreadClick(chatThread) {
@@ -104,16 +111,29 @@ function Chat({ chat_threads }) {
     getMessages(chatThread.id)
   }
 
+  function handleNewThread() {
+    setCurrentChatThread(null)
+    setMessages([])
+  }
+
   return (
     <div className="flex h-screen">
       <div className="w-1/4 bg-gray-800 text-white overflow-auto">
+        <div className="p-4">
+          <button
+            onClick={handleNewThread}
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mb-4 rounded"
+          >
+            New Thread
+          </button>
+        </div>
         {chatThreads.map((chatThread, index) => (
           <div
             key={index}
             onClick={() => onChatThreadClick(chatThread)}
             className="p-4 hover:bg-gray-700 cursor-pointer"
           >
-            <p>{chatThread.title}</p>
+            <p>{chatThread.title || "New Chat"}</p>
           </div>
         ))}
       </div>
@@ -122,17 +142,17 @@ function Chat({ chat_threads }) {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`p-4 m-2 rounded-lg ${
+              className={`p-4 pl-8 m-2 rounded-lg prose ${
                 message.sender === 'assistant' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
               }`}
             >
-              <p>{message.content}</p>
+              <Markdown>{message.content}</Markdown>
             </div>
           ))}
           {
             assistantMessage && (
-              <div className="p-4 m-2 rounded-lg bg-blue-500 text-white">
-                <p>{assistantMessage}</p>
+              <div className="p-4 pl-8 m-2 rounded-lg bg-blue-500 text-white prose">
+                <Markdown>{assistantMessage}</Markdown>
               </div>
             )
           }
